@@ -19,7 +19,7 @@ dom.window.HTMLDialogElement.prototype.close = function () { this.removeAttribut
 dom.window.scrollTo = () => {};
 const React = await import('react');
 const { render, cleanup, fireEvent, screen, within, waitFor, act } = await import('@testing-library/react');
-const { App, InteractionAudio } = await import('../.cache/ssr/entry-server.js');
+const { App, InteractionAudio, createSoundtrack } = await import('../.cache/ssr/entry-server.js');
 const axe = (await import('axe-core')).default;
 const errors = [];
 const originalError = console.error;
@@ -190,27 +190,36 @@ await check('Canvas geometry produces finite coordinates and pauses in hidden ta
 });
 await check('Sound starts only after opt-in, waits for resume, and stops on mute', async () => {
   const original = window.AudioContext;
-  let instances = 0, starts = 0, release;
+  let instances = 0, starts = 0, musicStarts = 0, musicStops = 0, buffers = 0, release;
   const frequencies = [];
-  const param = { cancelScheduledValues() {}, setTargetAtTime() {}, setValueAtTime() {}, exponentialRampToValueAtTime() {} };
+  const param = { cancelScheduledValues() {}, setTargetAtTime() {}, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {} };
   const fake = { state: 'suspended', currentTime: 10, destination: {},
     resume() { return new Promise(resolve => { release = () => { this.state = 'running'; resolve(); }; }); },
     suspend() { this.state = 'suspended'; return Promise.resolve(); },
     close() { this.state = 'closed'; return Promise.resolve(); },
     createGain() { return { gain: param, connect() {}, disconnect() {} }; },
+    createBuffer(channels, length, sampleRate) { buffers++; const data = new Float32Array(length); return { length, sampleRate, duration: length / sampleRate, numberOfChannels: channels, getChannelData() { return data; } }; },
+    createBufferSource() { return { loop: false, connect() {}, disconnect() {}, start() { assert.equal(this.loop, true); musicStarts++; }, stop() { musicStops++; } }; },
     createOscillator() { return { frequency: { ...param, setValueAtTime(f) { frequencies.push(f); } }, connect() {}, disconnect() {}, start() { starts++; }, stop() {} }; },
   };
   window.AudioContext = function () { instances++; return fake; };
   try {
     const audio = new InteractionAudio();
-    await audio.play(); assert.equal(instances, 0);
+    await audio.play(); assert.equal(instances, 0); assert.equal(musicStarts, 0);
     audio.setEnabled(true);
     const pending = audio.play('enable');
     assert.equal(instances, 1); assert.equal(starts, 0);
     release(); assert.equal(await pending, true); assert.equal(starts, 3);
+    assert.equal(musicStarts, 1); assert.equal(buffers, 1);
     assert.deepEqual(frequencies, [440, 660, 880]);
     fake.currentTime += 1; await audio.play('success'); assert.equal(starts, 7);
+    assert.equal(musicStarts, 1);
+    audio.suspend(); assert.equal(fake.state, 'suspended');
+    const resumed = audio.resumeMusic(); release(); await resumed; assert.equal(fake.state, 'running');
     audio.setEnabled(false); await audio.play('pulse'); assert.equal(starts, 7);
+    assert.equal(musicStops, 1);
+    audio.setEnabled(true); fake.currentTime += 1; await audio.play('tap');
+    assert.equal(musicStarts, 2); assert.equal(buffers, 1);
     audio.dispose(); assert.equal(fake.state, 'closed');
     localStorage.clear(); fake.state = 'running';
     render(React.createElement(App, { path: '/' }));
@@ -227,6 +236,19 @@ await check('Sound starts only after opt-in, waits for resume, and stops on mute
     fireEvent.click(screen.getByRole('button', { name: /GIVE IT A PULSE/ }));
     await act(async () => {}); assert.equal(starts, before + 5);
   } finally { cleanup(); window.AudioContext = original; localStorage.clear(); }
+});
+await check('Original ambient loop contains finite audible samples and a smooth seam', async () => {
+  const buffer = createSoundtrack({ createBuffer(channels, length, sampleRate) {
+    const data = new Float32Array(length);
+    return { length, sampleRate, numberOfChannels: channels, duration: length / sampleRate, getChannelData() { return data; } };
+  } });
+  const data = buffer.getChannelData(0);
+  let sum = 0, peak = 0;
+  for (const sample of data) { assert(Number.isFinite(sample)); sum += sample * sample; peak = Math.max(peak, Math.abs(sample)); }
+  assert.equal(buffer.numberOfChannels, 1); assert.equal(buffer.sampleRate, 22050);
+  assert(buffer.duration > 26 && buffer.duration < 27);
+  assert(peak < .9 && peak > .05); assert(Math.sqrt(sum / data.length) > .02);
+  assert(Math.abs(data[0] - data.at(-1)) < .04);
 });
 await check('Unsupported audio reports a recoverable error and stays muted', async () => {
   const original = window.AudioContext;

@@ -25,7 +25,7 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
     loaded.current = true;
     const change = () => { if (preference.matches) setMotion(false); };
     preference.addEventListener('change', change);
-    const visibility = () => { if (document.hidden) audio.current.suspend(); };
+    const visibility = () => { if (document.hidden) audio.current.suspend(); else void audio.current.resumeMusic(); };
     document.addEventListener('visibilitychange', visibility);
     return () => { preference.removeEventListener('change', change); document.removeEventListener('visibilitychange', visibility); clearTimeout(toastTimer.current); audio.current.dispose(); };
   }, []);
@@ -41,7 +41,7 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   };
   const setSound = (value: boolean) => {
     audio.current.setEnabled(value); updateSound(value);
-    if (value) { notify('Sound on. Try a pulse or the playground.'); play('enable'); }
+    if (value) { notify('Sound on. Signal Drift is playing.'); play('enable'); }
     else notify('Sound off.');
   };
   const discover = (id: Discovery) => {

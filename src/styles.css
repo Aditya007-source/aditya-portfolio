@@ -49,6 +49,7 @@ svg { display: block; }
 .sound-toggle { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #ffffff30; border-radius: 50%; flex-shrink: 0; transition: color .2s, border-color .2s; }
 .sound-toggle svg { width: 22px; height: 22px; }
 .sound-toggle:hover, .sound-toggle[aria-pressed="true"] { color: var(--orange); border-color: var(--orange); }
+.soundtrack-caption { font-family: var(--mono); font-size: 11px; color: var(--lavender); margin-top: 24px; }
 .desktop-nav { display: flex; gap: clamp(20px, 3vw, 50px); }
 .desktop-nav a { font-size: 14px; transition: color .2s; }
 .desktop-nav a:hover { color: var(--orange); }

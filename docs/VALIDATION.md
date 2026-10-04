@@ -3,8 +3,8 @@
 - Local dependency installation completed. Dependencies are in `node_modules/`; the lockfile is included.
 - Production build passed, including TypeScript checking and prerendering of the homepage and all six project routes.
 - ESLint passed for the application source.
-- All 25 automated verification checks passed. Detailed results are recorded in `.cache/verification.json`.
-- Main JavaScript bundle: approximately 89.51 KB gzip; lazy playground chunk: 2.15 KB gzip; stylesheet: approximately 13.36 KB gzip.
+- All 26 automated verification checks passed. Detailed results are recorded in `.cache/verification.json`.
+- Main JavaScript bundle: approximately 90.20 KB gzip; lazy playground chunk: 2.15 KB gzip; stylesheet: approximately 13.4 KB gzip.
 - Fonts are local WOFF2 assets; SIL OFL notices and runtime software licenses are included in the distribution.
 - The local preview responds successfully at `http://127.0.0.1:4173/`.
 
@@ -14,7 +14,7 @@ Project routes and metadata; personal identity, education, interests, and contac
 
 ## Limits
 
-Audio checks use a simulated Web Audio context to verify opt-in, scheduling after resume, cue frequencies, muting, and unsupported-browser feedback. Actual audible output and device volume have not been tested in a browser. The visible sound control requires a visitor click; restored preferences never start playback on page load.
+Audio checks use a simulated Web Audio context to verify opt-in, scheduling after resume, cue frequencies, a single looping music source, reusable music buffers, muting, suspend/resume, and unsupported-browser feedback. The original Signal Drift waveform is checked for finite samples, nonzero signal level, clipping headroom, and a smooth loop seam. Actual audible output and device volume have not been tested in a browser. The visible sound control requires a visitor click; restored preferences never start playback on page load.
 
 Chromium could not run under the Windows restricted-token sandbox. The testing browser crashed on internal IPC creation and was stopped; it is not the portfolio server. Browser-specific focus trapping, pixels, responsive screenshots, touch gestures, computed contrast, and Lighthouse LCP/CLS measurements remain unverified. DOM simulation checks do not substitute for those results. Playwright scenarios are included for running later in a normal local terminal, but were not marked as passed here.
 

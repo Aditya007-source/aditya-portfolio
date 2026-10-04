@@ -36,7 +36,7 @@ Email, telephone, and GitHub links are configured. The contact form submits name
 - Spring: drag horizontally or use the pull slider and bounce button; adjust stiffness.
 - Circuit: rotate four corner tiles into a closed square.
 - Menu: motion and opt-in sound controls, terminal, build details.
-- Header speaker / footer sound button: enable audio with an immediate confirmation chime. Pulse, spring, circuit, and navigation cues are synthesized locally; sound is off by default and the preference is saved. No autoplaying music or downloaded audio assets.
+- Header speaker / footer sound button: enable audio with a confirmation chime and **Signal Drift**, an original looping ambient electronic score. Soft pads and a slow melody sit beneath pulse, spring, circuit, and navigation cues. Audio is synthesized locally, starts after a gesture, fades out on mute, and pauses in hidden tabs. The reusable mono loop uses less than 2.4 MB of memory; there are no downloaded audio assets. Sound is off by default and the preference is saved.
 - Ctrl/Cmd+K: open terminal. Supported commands: `help`, `work`, `lab`, `contact`, `clear`.
 - Featured project URLs: `/work/rag/`, `/work/anpr/`, `/work/experiments/`, `/work/portfolio/`.
 - Preserved fictional concept URLs: `/work/orbit/`, `/work/prism/`.
