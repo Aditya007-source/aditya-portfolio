@@ -36,6 +36,7 @@ Email, telephone, and GitHub links are configured. The contact form submits name
 - Spring: drag horizontally or use the pull slider and bounce button; adjust stiffness.
 - Circuit: rotate four corner tiles into a closed square.
 - Menu: motion and opt-in sound controls, terminal, build details.
+- Header speaker / footer sound button: enable audio with an immediate confirmation chime. Pulse, spring, circuit, and navigation cues are synthesized locally; sound is off by default and the preference is saved. No autoplaying music or downloaded audio assets.
 - Ctrl/Cmd+K: open terminal. Supported commands: `help`, `work`, `lab`, `contact`, `clear`.
 - Featured project URLs: `/work/rag/`, `/work/anpr/`, `/work/experiments/`, `/work/portfolio/`.
 - Preserved fictional concept URLs: `/work/orbit/`, `/work/prism/`.

@@ -4,15 +4,21 @@ import { useExperience } from '../experience';
 
 export function Spark({ className = '' }: { className?: string }) { return <svg className={className} viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 0v60M0 30h60M9 9l42 42M9 51 51 9" stroke="currentColor" strokeWidth="7" /></svg>; }
 export function Plus() { return <span aria-hidden="true" className="plus">+</span>; }
+function SoundToggle({ text = false }: { text?: boolean }) {
+  const { sound, setSound } = useExperience();
+  return <button className={text ? 'footer-sound' : 'sound-toggle'} onClick={() => setSound(!sound)} aria-pressed={sound} aria-label={`Turn sound ${sound ? 'off' : 'on'}`} title={`Sound ${sound ? 'on' : 'off'}`}>
+    {text ? `Sound ${sound ? 'on' : 'off'}` : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" />{sound ? <><path d="M16 8a6 6 0 0 1 0 8M19 5a10 10 0 0 1 0 14" /></> : <path d="m17 9 5 6m0-6-5 6" />}</svg>}
+  </button>;
+}
 export function Header({ home }: { home: boolean }) {
-  const { motion, sound, setMotion, setSound, discoveries, reset } = useExperience();
+  const { motion, sound, setMotion, setSound, discoveries, reset, play } = useExperience();
   const [panel, setPanel] = useState<'menu' | 'build' | 'terminal' | null>(null);
   const [command, setCommand] = useState('');
   const [response, setResponse] = useState('Connection ready. Type help to see available commands.');
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const opener = useRef<HTMLElement | null>(null);
-  const open = (next: 'menu' | 'build' | 'terminal') => { opener.current = document.activeElement as HTMLElement; setPanel(next); };
+  const open = (next: 'menu' | 'build' | 'terminal') => { opener.current = document.activeElement as HTMLElement; setPanel(next); play('tap'); };
   const close = () => { dialog.current?.close(); setPanel(null); opener.current?.focus(); };
   useEffect(() => { if (panel) { dialog.current?.showModal(); if (panel === 'terminal') input.current?.focus(); } }, [panel]);
   useEffect(() => {
@@ -25,7 +31,7 @@ export function Header({ home }: { home: boolean }) {
   }, []);
   const href = (id: string) => `${home ? '' : '/'}#${id}`;
   const run = (value: string) => {
-    const cmd = value.trim().toLowerCase(); setCommand('');
+    const cmd = value.trim().toLowerCase(); setCommand(''); play('tap');
     if (cmd === 'help') setResponse('work → selected projects · lab → experiments · contact → connection panel · clear → clear terminal');
     else if (['work', 'lab', 'contact'].includes(cmd)) { close(); window.location.assign(href(cmd)); }
     else if (cmd === 'clear') setResponse('');
@@ -34,9 +40,9 @@ export function Header({ home }: { home: boolean }) {
   return <>
     <a className="skip-link" href="#main">Skip to content</a>
     <header className="site-header">
-      <a className="brand" href="/" aria-label={`${profile.name}, home`}><Spark /><span>{profile.shortName.toLowerCase()}<span className="brand-dot">.</span></span></a>
+      <a className="brand" href="/" aria-label={`${profile.name}, home`}><Spark /><span>{profile.shortName}<span className="brand-dot">.</span></span></a>
       <nav aria-label="Main navigation" className="desktop-nav"><a href={href('work')}>The work <span>01</span></a><a href={href('lab')}>The playground <span>02</span></a><a href={href('about')}>The human <span>03</span></a></nav>
-      <div className="header-actions"><a className="contact-link" href={href('contact')}>Let’s talk <Plus /></a><button className="menu-button" onClick={() => open('menu')} aria-label="Open navigation and settings"><span /><span /></button></div>
+      <div className="header-actions"><SoundToggle /><a className="contact-link" href={href('contact')}>Let’s talk <Plus /></a><button className="menu-button" onClick={() => open('menu')} aria-label="Open navigation and settings"><span /><span /></button></div>
     </header>
     <dialog ref={dialog} className={`site-dialog ${panel === 'terminal' ? 'terminal-dialog' : ''}`} onCancel={e => { e.preventDefault(); close(); }} onClick={e => { if (e.target === dialog.current) close(); }} aria-labelledby="dialog-title">
       <div className="dialog-top"><span className="eyebrow">SIGNAL / PLAY</span><button className="icon-button" onClick={close} aria-label="Close dialog">×</button></div>
@@ -46,4 +52,4 @@ export function Header({ home }: { home: boolean }) {
     </dialog>
   </>;
 }
-export function Footer() { const { motion, setMotion } = useExperience(); return <footer className="site-footer"><a className="brand" href="/"><Spark /><span>{profile.shortName.toLowerCase()}.</span></a><span className="mono">A little logic. A lot of magic.</span><div><button onClick={() => setMotion(!motion)} aria-pressed={motion}>Motion {motion ? 'on' : 'off'}</button><button onClick={() => window.dispatchEvent(new Event('open-build'))}>Behind the build</button><span>© {new Date().getFullYear()}</span></div></footer>; }
+export function Footer() { const { motion, setMotion } = useExperience(); return <footer className="site-footer"><a className="brand" href="/"><Spark /><span>{profile.shortName}.</span></a><span className="mono">A little logic. A lot of magic.</span><div><SoundToggle text /><button onClick={() => setMotion(!motion)} aria-pressed={motion}>Motion {motion ? 'on' : 'off'}</button><button onClick={() => window.dispatchEvent(new Event('open-build'))}>Behind the build</button><span>© {new Date().getFullYear()}</span></div></footer>; }

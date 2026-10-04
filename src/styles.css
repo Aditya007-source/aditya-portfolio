@@ -46,6 +46,9 @@ svg { display: block; }
 .brand { display: flex; align-items: center; gap: 11px; font-family: var(--display); font-size: 30px; font-weight: 600; letter-spacing: -.06em; }
 .brand svg { width: 25px; height: 25px; color: var(--orange); }
 .brand-dot { color: var(--orange); }
+.sound-toggle { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #ffffff30; border-radius: 50%; flex-shrink: 0; transition: color .2s, border-color .2s; }
+.sound-toggle svg { width: 22px; height: 22px; }
+.sound-toggle:hover, .sound-toggle[aria-pressed="true"] { color: var(--orange); border-color: var(--orange); }
 .desktop-nav { display: flex; gap: clamp(20px, 3vw, 50px); }
 .desktop-nav a { font-size: 14px; transition: color .2s; }
 .desktop-nav a:hover { color: var(--orange); }
@@ -468,7 +471,9 @@ input[type='range'] { accent-color: var(--orange); width: 110px; min-height: 28p
   .site-header { height: 72px; }
   .brand { font-size: 26px; }
   .brand svg { width: 22px; height: 22px; }
-  .header-actions { gap: 15px; }
+  .header-actions { gap: 8px; }
+  .header-actions .contact-link { font-size: 11px; gap: 6px; }
+  .brand { gap: 8px; }
   .contact-link { font-size: 12px; gap: 12px; }
   .contact-link .plus { font-size: 22px; }
   .menu-button { width: 40px; height: 40px; }

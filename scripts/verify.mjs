@@ -19,7 +19,7 @@ dom.window.HTMLDialogElement.prototype.close = function () { this.removeAttribut
 dom.window.scrollTo = () => {};
 const React = await import('react');
 const { render, cleanup, fireEvent, screen, within, waitFor, act } = await import('@testing-library/react');
-const { App } = await import('../.cache/ssr/entry-server.js');
+const { App, InteractionAudio } = await import('../.cache/ssr/entry-server.js');
 const axe = (await import('axe-core')).default;
 const errors = [];
 const originalError = console.error;
@@ -57,6 +57,7 @@ await check('Personal identity, contact links, education, and interests are publ
   assert(screen.getByText('M.Sc. Industrial AI'));
   assert(screen.getByText('CGPA: 9.22 / 10'));
   assert(screen.getByText('Boxing')); assert(screen.getByText('Fitness'));
+  for (const brand of document.querySelectorAll('.brand')) assert.equal(brand.textContent, 'Aditya.');
   assert.equal(screen.getByRole('link', { name: 'GitHub' }).getAttribute('href'), 'https://github.com/Aditya007-source');
   assert.equal(screen.getByRole('link', { name: '+49 1745977418' }).getAttribute('href'), 'tel:+491745977418');
   assert.equal(screen.getByRole('link', { name: 'adityamishra3917@gmail.com' }).getAttribute('href'), 'mailto:adityamishra3917@gmail.com');
@@ -186,6 +187,56 @@ await check('Canvas geometry produces finite coordinates and pauses in hidden ta
   const before = strokes; await act(async () => { window.dispatchEvent(new Event('signal-pulse')); await new Promise(resolve => setTimeout(resolve, 40)); }); assert.equal(strokes, before);
   delete document.hidden; cleanup(); reduced = false;
   dom.window.HTMLCanvasElement.prototype.getContext = originalContext; dom.window.HTMLElement.prototype.getBoundingClientRect = originalBounds;
+});
+await check('Sound starts only after opt-in, waits for resume, and stops on mute', async () => {
+  const original = window.AudioContext;
+  let instances = 0, starts = 0, release;
+  const frequencies = [];
+  const param = { cancelScheduledValues() {}, setTargetAtTime() {}, setValueAtTime() {}, exponentialRampToValueAtTime() {} };
+  const fake = { state: 'suspended', currentTime: 10, destination: {},
+    resume() { return new Promise(resolve => { release = () => { this.state = 'running'; resolve(); }; }); },
+    suspend() { this.state = 'suspended'; return Promise.resolve(); },
+    close() { this.state = 'closed'; return Promise.resolve(); },
+    createGain() { return { gain: param, connect() {}, disconnect() {} }; },
+    createOscillator() { return { frequency: { ...param, setValueAtTime(f) { frequencies.push(f); } }, connect() {}, disconnect() {}, start() { starts++; }, stop() {} }; },
+  };
+  window.AudioContext = function () { instances++; return fake; };
+  try {
+    const audio = new InteractionAudio();
+    await audio.play(); assert.equal(instances, 0);
+    audio.setEnabled(true);
+    const pending = audio.play('enable');
+    assert.equal(instances, 1); assert.equal(starts, 0);
+    release(); assert.equal(await pending, true); assert.equal(starts, 3);
+    assert.deepEqual(frequencies, [440, 660, 880]);
+    fake.currentTime += 1; await audio.play('success'); assert.equal(starts, 7);
+    audio.setEnabled(false); await audio.play('pulse'); assert.equal(starts, 7);
+    audio.dispose(); assert.equal(fake.state, 'closed');
+    localStorage.clear(); fake.state = 'running';
+    render(React.createElement(App, { path: '/' }));
+    const before = starts;
+    fireEvent.click(document.querySelector('.site-header .sound-toggle'));
+    await waitFor(() => assert.equal(starts, before + 3));
+    assert.equal(document.querySelector('.sound-toggle').getAttribute('aria-pressed'), 'true');
+    assert.equal(JSON.parse(localStorage.getItem('signal-play:v1')).sound, true);
+    fake.currentTime += 1;
+    fireEvent.click(screen.getByRole('button', { name: /GIVE IT A PULSE/ }));
+    await waitFor(() => assert.equal(starts, before + 5));
+    fireEvent.click(document.querySelector('.site-header .sound-toggle'));
+    fake.currentTime += 1;
+    fireEvent.click(screen.getByRole('button', { name: /GIVE IT A PULSE/ }));
+    await act(async () => {}); assert.equal(starts, before + 5);
+  } finally { cleanup(); window.AudioContext = original; localStorage.clear(); }
+});
+await check('Unsupported audio reports a recoverable error and stays muted', async () => {
+  const original = window.AudioContext;
+  window.AudioContext = undefined;
+  try {
+    render(React.createElement(App, { path: '/' }));
+    fireEvent.click(document.querySelector('.site-header .sound-toggle'));
+    await waitFor(() => assert(screen.getByText('Audio is unavailable. Try enabling sound again in your browser.')));
+    assert.equal(document.querySelector('.sound-toggle').getAttribute('aria-pressed'), 'false');
+  } finally { cleanup(); window.AudioContext = original; localStorage.clear(); }
 });
 await check('No React errors occurred in component checks', async () => { assert.deepEqual(errors, []); });
 console.error = originalError;
