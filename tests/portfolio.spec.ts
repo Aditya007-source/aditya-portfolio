@@ -58,13 +58,19 @@ test('project detail previews work and direct routes survive reload', async ({ p
   await page.goto('/work/rag/'); await page.reload(); await expect(page.getByRole('heading', { level: 1 })).toContainText('RAG Intelligent PDF Reader'); await page.getByRole('button', { name: /Next step/ }).click(); await expect(page.getByText('Retrieve relevant source material.')).toBeVisible();
 });
 
-test('contact draft downloads locally without a submission', async ({ page }) => {
+test('contact submits to the email service without sending a real message in tests', async ({ page }) => {
+  await page.route('https://formsubmit.co/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Mock submission received</h1>' }));
   await page.goto('/#contact');
   await page.getByLabel('Your name').fill('Test visitor');
+  await page.getByLabel('Your email', { exact: true }).fill('visitor@example.com');
   await page.getByLabel('What are you thinking?').fill('What if we built a playful knowledge tool?');
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save a local draft' }).click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe('lets-make-something.txt');
-  await expect(page.getByText('Draft saved locally. Nothing has been sent.')).toBeVisible();
+  const requestPromise = page.waitForRequest(request => request.url().startsWith('https://formsubmit.co/') && request.method() === 'POST');
+  await page.getByRole('button', { name: 'Send message' }).click();
+  const request = await requestPromise;
+  expect(request.url()).toBe('https://formsubmit.co/adityamishra3917@gmail.com');
+  const fields = new URLSearchParams(request.postData()!);
+  expect(fields.get('name')).toBe('Test visitor');
+  expect(fields.get('email')).toBe('visitor@example.com');
+  expect(fields.get('message')).toBe('What if we built a playful knowledge tool?');
+  await expect(page.getByRole('heading', { name: 'Mock submission received' })).toBeVisible();
 });

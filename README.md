@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-All dependencies and fonts are local. No hosting service, account, database, analytics, or remote portfolio API is used. The live RAG link opens the supplied Streamlit application; the portfolio's own retrieval illustration is a separate local demo.
+All dependencies and fonts are local. The portfolio needs no database, analytics, or backend server. Contact submissions use FormSubmit to send email; see `docs/CONTACT_SETUP.md` for one-time recipient activation. The live RAG link opens the supplied Streamlit application; the portfolio's own retrieval illustration is a separate local demo.
 
 ## Customize
 
@@ -28,7 +28,7 @@ All dependencies and fonts are local. No hosting service, account, database, ana
 
 The homepage features the RAG Intelligent PDF Reader, ANPR & Traffic Monitoring, and ongoing Web & AI Experiments. Technical descriptions and background come from the portfolio owner. RAG links to the supplied live application. Pipeline, traffic, and chart previews are original illustrations, not screenshots or measured results. Orbit and Prism remain available at their existing URLs as explicitly fictional concepts.
 
-Email, telephone, and GitHub links are configured. The separate draft form saves a local text file and does not send messages. Settings and discoveries use device-local storage, with an in-memory fallback. Reset discoveries from “Behind the build.”
+Email, telephone, and GitHub links are configured. The contact form submits name, reply email, and message to FormSubmit for email notification to the owner. It requires one-time email activation before real visitors use it. Submission continues to the provider's verification and confirmation page, with default CAPTCHA enabled. Settings and discoveries use device-local storage, with an in-memory fallback. Reset discoveries from “Behind the build.”
 
 ## Interaction map
 
@@ -52,6 +52,6 @@ Build output is `dist/`. Type checking runs as part of the build. Fonts are self
 
 `npm test` runs component interaction checks, static-output checks, Canvas geometry checks, storage and reduced-motion checks, and axe accessibility structure checks. It writes `.cache/verification.json`. These DOM simulations do not verify pixels, browser-native focus behavior, touch gestures, or contrast.
 
-`npm run test:browser` contains Playwright checks for responsive widths, keyboard focus, direct routes, downloads, and no-JavaScript rendering. Browser tests could not run in the current Windows sandbox: Chromium's IPC failed and the test browser crashed. No further browser launches are made here. Run this command in a normal local terminal if you want to complete those checks; install Chromium with `npx playwright install chromium` if necessary.
+`npm run test:browser` contains Playwright checks for responsive widths, keyboard focus, direct routes, contact submission (intercepted, no actual email), and no-JavaScript rendering. Browser tests could not run in the current Windows sandbox: Chromium's IPC failed and the test browser crashed. No further browser launches are made here. Run this command in a normal local terminal if you want to complete those checks; install Chromium with `npx playwright install chromium` if necessary.
 
 Research and reuse decisions are in `docs/INSPIRATION.md`. Runtime library licenses are copied to `dist/THIRD_PARTY_NOTICES.txt` during the build.

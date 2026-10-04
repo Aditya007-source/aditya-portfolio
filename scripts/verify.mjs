@@ -129,16 +129,41 @@ await check('Real work pages use personal titles and route-specific descriptions
   }
 });
 await check('Unknown routes have a usable recovery link', async () => { render(React.createElement(App, { path: '/missing' })); assert(screen.getByRole('link', { name: /Back to the beginning/ })); cleanup(); });
-await check('Contact saves a local draft without sending it', async () => {
-  const originalClick = dom.window.HTMLAnchorElement.prototype.click;
-  let filename = '';
-  dom.window.HTMLAnchorElement.prototype.click = function () { filename = this.download; };
+await check('Contact posts complete messages to the configured email service', async () => {
   render(React.createElement(App, { path: '/' }));
+  const form = screen.getByRole('form', { name: 'Send Aditya a message' });
+  assert.equal(form.getAttribute('action'), 'https://formsubmit.co/adityamishra3917@gmail.com');
+  assert.equal(form.method, 'post');
   fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Test visitor' } });
+  fireEvent.change(screen.getByLabelText('Your email'), { target: { value: 'visitor@example.com' } });
   fireEvent.change(screen.getByLabelText('What are you thinking?'), { target: { value: 'What if we built a better knowledge tool?' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save a local draft' }));
-  assert.equal(filename, 'lets-make-something.txt'); assert(screen.getByText('Draft saved locally. Nothing has been sent.'));
-  cleanup(); dom.window.HTMLAnchorElement.prototype.click = originalClick;
+  assert(form.checkValidity());
+  const fields = new dom.window.FormData(form);
+  assert.equal(fields.get('name'), 'Test visitor');
+  assert.equal(fields.get('email'), 'visitor@example.com');
+  assert.equal(fields.get('message'), 'What if we built a better knowledge tool?');
+  assert.equal(fields.get('_subject'), 'New message from Aditya\u2019s portfolio');
+  assert.equal(fields.get('_template'), 'table');
+  assert.equal(fields.get('_honey'), '');
+  assert.equal(fields.get('_captcha'), null);
+  assert.equal(screen.queryAllByRole('button', { name: /draft/i }).length, 0);
+  assert(screen.getByRole('button', { name: 'Send message' }));
+  cleanup();
+});
+await check('Contact requires a valid reply email and works in prerendered HTML', async () => {
+  render(React.createElement(App, { path: '/' }));
+  const email = screen.getByLabelText('Your email');
+  assert.equal(email.required, true); assert.equal(email.checkValidity(), false);
+  fireEvent.change(email, { target: { value: 'not-an-email' } }); assert.equal(email.checkValidity(), false);
+  fireEvent.change(email, { target: { value: 'visitor@example.com' } }); assert.equal(email.checkValidity(), true);
+  cleanup();
+  const html = await readFile('dist/index.html', 'utf8');
+  const staticPage = new JSDOM(html);
+  const form = staticPage.window.document.querySelector('form.contact-form');
+  assert.equal(form.method, 'post'); assert.equal(form.action, 'https://formsubmit.co/adityamishra3917@gmail.com');
+  assert(form.querySelector('input[name="email"][required]'));
+  assert.equal(form.querySelector('input[name="_honey"]').style.display, 'none');
+  staticPage.window.close();
 });
 await check('Unavailable local storage does not prevent interaction', async () => {
   const originalGet = dom.window.Storage.prototype.getItem; const originalSet = dom.window.Storage.prototype.setItem;
